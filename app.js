@@ -121,7 +121,8 @@ function renderPeople(monthEvents, counts) {
 }
 
 function renderCalendar(monthEvents) {
-  const selectedEvents = state.selectedName === "전체"
+  const isAllSelected = state.selectedName === "전체";
+  const selectedEvents = isAllSelected
     ? monthEvents
     : monthEvents.filter((event) => event.name === state.selectedName);
   const dateMap = new Map();
@@ -141,8 +142,9 @@ function renderCalendar(monthEvents) {
     const date = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const list = dateMap.get(date) || [];
     const className = list.length > 1 ? "day multi" : list.length === 1 ? "day hit" : "day";
-    const books = list.slice(0, 8).map(() => '<span class="book-mark" aria-hidden="true">📚</span>').join("");
-    const label = list.length ? `<span class="day-count">${list.length}회</span>` : "";
+    const icon = isAllSelected ? "📚" : "📖";
+    const books = list.slice(0, 8).map(() => `<span class="book-mark" aria-hidden="true">${icon}</span>`).join("");
+    const label = isAllSelected && list.length ? `<span class="day-count">${list.length}회</span>` : "";
     const title = list.length
       ? ` title="${escapeHtml(list.map((event) => `${event.name} ${event.time}`).join("\n"))}"`
       : "";
