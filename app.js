@@ -141,14 +141,14 @@ function renderCalendar(monthEvents) {
     const date = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const list = dateMap.get(date) || [];
     const className = list.length > 1 ? "day multi" : list.length === 1 ? "day hit" : "day";
-    const dots = list.slice(0, 8).map(() => '<span class="dot"></span>').join("");
+    const books = list.slice(0, 8).map(() => '<span class="book-mark" aria-hidden="true">📚</span>').join("");
     const label = list.length ? `<span class="day-count">${list.length}회</span>` : "";
     const title = list.length
       ? ` title="${escapeHtml(list.map((event) => `${event.name} ${event.time}`).join("\n"))}"`
       : "";
     cells.push(`<div class="${className}"${title}>
       <span class="num">${day}</span>
-      <div class="names">${dots}</div>
+      <div class="names">${books}</div>
       ${label}
     </div>`);
   }
