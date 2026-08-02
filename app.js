@@ -90,6 +90,20 @@ function countsByName(monthEvents) {
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "ko"));
 }
 
+
+function defaultMonth() {
+  const latestMonth = state.months[state.months.length - 1] || "";
+  if (!latestMonth || state.months.length < 2) return latestMonth;
+
+  const latestEvents = eventsForMonth(latestMonth);
+  const latestDate = latestEvents.map((event) => event.date).sort().at(-1) || "";
+  const [year, month] = latestMonth.split("-").map(Number);
+  const lastDate = new Date(year, month, 0).getDate();
+  const latestDay = Number(latestDate.slice(8, 10));
+
+  return latestDay < lastDate ? state.months[state.months.length - 2] : latestMonth;
+}
+
 function renderMonthSelect() {
   $("monthSelect").innerHTML = state.months
     .map((month) => `<option value="${month}">${monthLabel(month)}</option>`)
@@ -220,7 +234,7 @@ async function init() {
   try {
     state.events = await loadEvents();
     state.months = [...new Set(state.events.map((event) => event.date.slice(0, 7)))].sort();
-    state.month = state.months[state.months.length - 1] || "";
+    state.month = defaultMonth();
 
     if (!state.month) {
       renderEmpty("data/kakao.txt에서 사진 인증 기록을 찾지 못했습니다.");
