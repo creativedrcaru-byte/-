@@ -92,16 +92,7 @@ function countsByName(monthEvents) {
 
 
 function defaultMonth() {
-  const latestMonth = state.months[state.months.length - 1] || "";
-  if (!latestMonth || state.months.length < 2) return latestMonth;
-
-  const latestEvents = eventsForMonth(latestMonth);
-  const latestDate = latestEvents.map((event) => event.date).sort().at(-1) || "";
-  const [year, month] = latestMonth.split("-").map(Number);
-  const lastDate = new Date(year, month, 0).getDate();
-  const latestDay = Number(latestDate.slice(8, 10));
-
-  return latestDay < lastDate ? state.months[state.months.length - 2] : latestMonth;
+  return state.months[state.months.length - 1] || "";
 }
 
 function renderMonthSelect() {
