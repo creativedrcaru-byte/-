@@ -1,5 +1,7 @@
 const DATA_URL = "data/kakao.txt";
 const GOAL_COUNT = 10;
+const DEFAULT_MONTH = "2026-08";
+const EXCLUDED_NAMES = new Set(["김유현", "김유현@real___fruits"]);
 
 const state = {
   month: "",
@@ -16,6 +18,10 @@ const monthLabel = (month) => {
 };
 
 async function loadEvents() {
+  if (typeof window !== "undefined" && typeof window.KAKAO_TEXT === "string") {
+    return uniqueDailyEvents(parseKakaoText(window.KAKAO_TEXT));
+  }
+
   const response = await fetch(`${DATA_URL}?v=${Date.now()}`, { cache: "no-store" });
   if (!response.ok) {
     throw new Error(`데이터 파일을 불러오지 못했습니다. (${response.status})`);
@@ -43,7 +49,7 @@ function parseKakaoText(text) {
     if (!messageMatch) return;
 
     const [, name, time, content] = messageMatch;
-    if (!content.includes("사진")) return;
+    if (!content.includes("사진") || EXCLUDED_NAMES.has(name.trim())) return;
 
     events.push({
       date: currentDate,
@@ -92,7 +98,9 @@ function countsByName(monthEvents) {
 
 
 function defaultMonth() {
-  return state.months[state.months.length - 1] || "";
+  return state.months.includes(DEFAULT_MONTH)
+    ? DEFAULT_MONTH
+    : state.months[state.months.length - 1] || "";
 }
 
 function renderMonthSelect() {
@@ -146,9 +154,16 @@ function renderCalendar(monthEvents) {
   for (let day = 1; day <= lastDate; day++) {
     const date = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const list = dateMap.get(date) || [];
-    const className = list.length > 1 ? "day multi" : list.length === 1 ? "day hit" : "day";
+    const activityClass = list.length >= 10
+      ? " activity-goal"
+      : list.length >= 5
+        ? " activity-medium"
+        : list.length
+          ? " activity-low"
+          : "";
+    const className = `day${activityClass}`;
     const icon = isAllSelected ? "📚" : "📖";
-    const books = list.slice(0, 8).map(() => `<span class="book-mark" aria-hidden="true">${icon}</span>`).join("");
+    const books = list.length ? `<span class="book-mark" aria-hidden="true">${icon}</span>` : "";
     const label = isAllSelected && list.length ? `<span class="day-count">${list.length}회</span>` : "";
     const title = list.length
       ? ` title="${escapeHtml(list.map((event) => `${event.name} ${event.time}`).join("\n"))}"`
