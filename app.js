@@ -1,7 +1,6 @@
 const DATA_URL = "data/kakao.txt";
 const GOAL_COUNT = 10;
 const DEFAULT_MONTH = "2026-08";
-const EXCLUDED_NAMES = new Set(["김유현", "김유현@real___fruits"]);
 
 const state = {
   month: "",
@@ -49,7 +48,7 @@ function parseKakaoText(text) {
     if (!messageMatch) return;
 
     const [, name, time, content] = messageMatch;
-    if (!content.includes("사진") || EXCLUDED_NAMES.has(name.trim())) return;
+    if (!content.includes("사진")) return;
 
     events.push({
       date: currentDate,
