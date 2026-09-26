@@ -27,17 +27,25 @@ const monthLabel = (month) => {
 };
 
 async function loadEvents() {
-  if (typeof window !== "undefined" && typeof window.KAKAO_TEXT === "string") {
+  const isLocalFile = typeof window !== "undefined" && window.location.protocol === "file:";
+  if (isLocalFile && typeof window.KAKAO_TEXT === "string") {
     return uniqueDailyEvents(parseKakaoText(window.KAKAO_TEXT));
   }
 
-  const response = await fetch(`${DATA_URL}?v=${Date.now()}`, { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error(`데이터 파일을 불러오지 못했습니다. (${response.status})`);
-  }
+  try {
+    const response = await fetch(`${DATA_URL}?v=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`데이터 파일을 불러오지 못했습니다. (${response.status})`);
+    }
 
-  const text = await response.text();
-  return uniqueDailyEvents(parseKakaoText(text));
+    const text = await response.text();
+    return uniqueDailyEvents(parseKakaoText(text));
+  } catch (error) {
+    if (typeof window !== "undefined" && typeof window.KAKAO_TEXT === "string") {
+      return uniqueDailyEvents(parseKakaoText(window.KAKAO_TEXT));
+    }
+    throw error;
+  }
 }
 
 function parseKakaoText(text) {
@@ -106,13 +114,6 @@ function countsByName(monthEvents) {
   return [...counts.entries()]
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "ko"));
-}
-
-
-function defaultMonth() {
-  return state.months.includes(DEFAULT_MONTH)
-    ? DEFAULT_MONTH
-    : state.months[state.months.length - 1] || "";
 }
 
 function renderMonthSelect() {
@@ -252,7 +253,9 @@ async function init() {
   try {
     state.events = await loadEvents();
     state.months = [...new Set(state.events.map((event) => event.date.slice(0, 7)))].sort();
-    state.month = defaultMonth();
+    state.month = state.months.includes(DEFAULT_MONTH)
+      ? DEFAULT_MONTH
+      : state.months[state.months.length - 1] || "";
 
     if (!state.month) {
       renderEmpty("data/kakao.txt에서 사진 인증 기록을 찾지 못했습니다.");
