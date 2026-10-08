@@ -1,11 +1,12 @@
 const DATA_URL = "data/kakao.txt";
 const GOAL_COUNT = 10;
-const DEFAULT_MONTH = "2026-09";
+const DEFAULT_MONTH = "2026-10";
 const EXCLUDED_NAMES_BY_MONTH = {
   "2026-08": new Set([
     "김유현@real___fruits",
     "온해(박미화)",
     "박미화@rich_happy100",
+    "박미화",
     "감필연/사복졸업",
     "홍윤지",
     "소금"
