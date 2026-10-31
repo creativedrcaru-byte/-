@@ -1,0 +1,4 @@
+# Raw KakaoTalk exports must stay local and must not be published.
+data/kakao.txt
+data/kakao-data.js
+KakaoTalk_*.txt

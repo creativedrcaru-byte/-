@@ -1,4 +1,3 @@
-const DATA_URL = "data/kakao.txt";
 const GOAL_COUNT = 10;
 const DEFAULT_MONTH = "2026-10";
 const EXCLUDED_NAMES_BY_MONTH = {
@@ -28,78 +27,15 @@ const monthLabel = (month) => {
 };
 
 async function loadEvents() {
-  const isLocalFile = typeof window !== "undefined" && window.location.protocol === "file:";
-  if (isLocalFile && typeof window.KAKAO_TEXT === "string") {
-    return uniqueDailyEvents(parseKakaoText(window.KAKAO_TEXT));
+  const events = typeof window !== "undefined" ? window.CERTIFICATION_EVENTS : null;
+  if (!Array.isArray(events)) {
+    throw new Error("가공된 인증 데이터를 불러오지 못했습니다.");
   }
 
-  try {
-    const response = await fetch(`${DATA_URL}?v=${Date.now()}`, { cache: "no-store" });
-    if (!response.ok) {
-      throw new Error(`데이터 파일을 불러오지 못했습니다. (${response.status})`);
-    }
-
-    const text = await response.text();
-    return uniqueDailyEvents(parseKakaoText(text));
-  } catch (error) {
-    if (typeof window !== "undefined" && typeof window.KAKAO_TEXT === "string") {
-      return uniqueDailyEvents(parseKakaoText(window.KAKAO_TEXT));
-    }
-    throw error;
-  }
-}
-
-function parseKakaoText(text) {
-  const events = [];
-  let currentDate = "";
-
-  text.split(/\r?\n/).forEach((line) => {
-    const dateMatch = line.match(/^-+\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
-    if (dateMatch) {
-      const [, year, month, day] = dateMatch;
-      currentDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-      return;
-    }
-
-    if (!currentDate || !line.includes("사진")) return;
-
-    const messageMatch = line.match(/^\[(.+?)\]\s*\[(\d{1,2}:\d{2})\]\s*(.*)$/);
-    if (!messageMatch) return;
-
-    const [, name, time, content] = messageMatch;
-    if (!content.includes("사진")) return;
-
-    events.push({
-      date: currentDate,
-      name: name.trim(),
-      time,
-      content: content.trim()
-    });
-  });
-
-  return events;
-}
-
-function uniqueDailyEvents(events) {
-  const byPersonDate = new Map();
-
-  events.forEach((event) => {
-    const key = `${event.date}::${event.name}`;
-    if (!byPersonDate.has(key)) {
-      byPersonDate.set(key, { ...event, rawCount: 1 });
-      return;
-    }
-
-    const existing = byPersonDate.get(key);
-    existing.rawCount += 1;
-    existing.content = `${existing.content} / ${event.content}`;
-  });
-
-  return [...byPersonDate.values()].sort((a, b) =>
-    a.date.localeCompare(b.date) ||
-    a.name.localeCompare(b.name, "ko") ||
-    a.time.localeCompare(b.time)
-  );
+  return events
+    .filter((event) => /^\d{4}-\d{2}-\d{2}$/.test(event.date) && event.name)
+    .map((event) => ({ date: event.date, name: String(event.name).trim() }))
+    .sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name, "ko"));
 }
 
 function eventsForMonth(month) {
@@ -180,7 +116,7 @@ function renderCalendar(monthEvents) {
     const books = list.length ? `<span class="book-mark" aria-hidden="true">${icon}</span>` : "";
     const label = isAllSelected && list.length ? `<span class="day-count">${list.length}회</span>` : "";
     const title = list.length
-      ? ` title="${escapeHtml(list.map((event) => `${event.name} ${event.time}`).join("\n"))}"`
+      ? ` title="${escapeHtml(list.map((event) => event.name).join("\n"))}"`
       : "";
     cells.push(`<div class="${className}"${title}>
       <span class="num">${day}</span>
@@ -259,7 +195,7 @@ async function init() {
       : state.months[state.months.length - 1] || "";
 
     if (!state.month) {
-      renderEmpty("data/kakao.txt에서 사진 인증 기록을 찾지 못했습니다.");
+      renderEmpty("가공된 인증 데이터에서 기록을 찾지 못했습니다.");
       return;
     }
 
